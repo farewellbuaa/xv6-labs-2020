@@ -107,6 +107,9 @@ allocproc(void)
 found:
   p->pid = allocpid();
 
+  // Do not trace a new process;
+  p->trace_mask = 0;
+
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     release(&p->lock);
@@ -266,6 +269,9 @@ fork(void)
   if((np = allocproc()) == 0){
     return -1;
   }
+  
+  // Copy trace mask to child
+  np->trace_mask = p->trace_mask;
 
   // Copy user memory from parent to child.
   if(uvmcopy(p->pagetable, np->pagetable, p->sz) < 0){
