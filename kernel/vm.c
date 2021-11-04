@@ -440,3 +440,35 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+void 
+vmprint_level(pagetable_t pagetable, int level)
+{
+  // there are 2^9 = 512 PTEs in a page table.
+  if((level > 3) || (level < 1)) {
+    panic("vmprint: invald level");
+  }
+  for(int i = 0; i < 512; i++){
+    pte_t pte = pagetable[i];
+    if(pte & PTE_V){
+      uint64 pa = PTE2PA(pte);
+      if (level==1) {
+        printf("..%d: pte %p pa %p\n", i, pte, pa);
+        vmprint_level((pagetable_t)pa, level+1);
+      } else if(level==2) {
+        printf(".. ..%d: pte %p pa %p\n", i, pte, pa);
+        vmprint_level((pagetable_t)pa, level+1);
+      } else {
+        printf(".. .. ..%d: pte %p pa %p\n", i, pte, pa);
+      }
+    }
+  }
+}
+
+void
+pagetableprint(pagetable_t pagetable)
+{
+  printf("page table %p\n", pagetable);
+  vmprint_level(pagetable, 1);
+}
+
