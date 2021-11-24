@@ -25,12 +25,25 @@ barrier_init(void)
 static void 
 barrier()
 {
-  // YOUR CODE HERE
-  //
   // Block until all threads have called barrier() and
   // then increment bstate.round.
-  //
-  
+  // for every operation of barrier, you should lock mutex.
+  pthread_mutex_lock(&bstate.barrier_mutex);
+  bstate.nthread += 1;
+  if (bstate.nthread!=nthread) {
+    // if this is not the last thread, just wait other thread to come
+    pthread_cond_wait(&bstate.barrier_cond, &bstate.barrier_mutex);
+    // don't forget to unlock mutex when wakeup with mutex locked.
+    // or it will be deadlock.
+    pthread_mutex_unlock(&bstate.barrier_mutex);
+  } else {
+    // this is the last thread, wakeup other thread.
+    pthread_cond_broadcast(&bstate.barrier_cond);
+    // modify state, unlock mutex then continue.
+    bstate.nthread = 0;
+    bstate.round += 1;
+    pthread_mutex_unlock(&bstate.barrier_mutex);
+  }
 }
 
 static void *
